@@ -12,9 +12,7 @@ require("../@")(module,options);
 
 function moduleCode(window){
    (function (node) {
-       
-       
-   
+
    var cryptoWindow =  function (storage,storageKey){
        if (typeof window==='object' && typeof process==='undefined') {
            if (storage!==false) {
@@ -46,8 +44,7 @@ function moduleCode(window){
        
        return node_window;
    };
-   
-   
+
    cryptoWindow.hardCodedPublic=hardCodedPublic;
    function hardCodedPublic (cb) {
        var win=cryptoWindow(false),subtle=win.crypto.subtle,
@@ -101,11 +98,26 @@ function moduleCode(window){
    }
    
    cryptoWindow.generateKeys=generateKeys;
-   function generateKeys(cb){
+   function generateKeys(encdec,cb){
+       if (typeof encdec==='function') {
+           cb=encdec;
+           encdec=false;
+       } else {
+           encdec=!!encdec;
+       }
+       var suffix=encdec ? '-crypto':''
+       
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
        
+
        // generating RSA key
-       subtle.generateKey({
+       subtle.generateKey(
+           encdec ? {
+                        name: "RSA-OAEP",
+                        modulusLength: 2048, //can be 1024, 2048, or 4096
+                        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+                        hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+           }: {
            name: "RSASSA-PKCS1-v1_5",
            modulusLength: 1024,
            publicExponent: new Uint8Array([1, 0, 1]),
@@ -114,15 +126,15 @@ function moduleCode(window){
            }
          },
            false,
-           ["sign", "verify"]
+           encdec ? ["encrypt", "decrypt"] : ["sign", "verify"]
          )
          .then(function(keyPairs){
            /** 
             * saving private RSA key to KeyStorage
             * creates file ./key_storage/prvRSA-1024.json
             */
-           keyStorage.setItem(cryptoWindow.keyname_private, keyPairs.privateKey);
-           keyStorage.setItem(cryptoWindow.keyname_public, keyPairs.publicKey);
+           keyStorage.setItem(cryptoWindow.keyname_private+suffix, keyPairs.privateKey);
+           keyStorage.setItem(cryptoWindow.keyname_public+suffix, keyPairs.publicKey);
            
            subtle.exportKey(
                "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
@@ -200,6 +212,46 @@ function moduleCode(window){
        .catch(cb);
    }
    
+   
+   cryptoWindow.encrypt=encrypt;
+   function encrypt (_data,cb) {
+       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
+       data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
+       subtle.encrypt(
+           {
+               name: "RSA-OAEP",
+               //label: Uint8Array([...]) //optional
+           },
+           keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'), 
+           data //ArrayBuffer of data you want to encrypt
+       )
+       .then(function(encrypted){
+           //returns an ArrayBuffer containing the encrypted data
+           cb(undefined,new Uint8Array(encrypted),data,_data);
+       })
+       .catch(cb);
+   }
+   
+   cryptoWindow.decrypt=decrypt;
+   function decrypt (_data,cb) {
+       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
+       data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
+       subtle.decrypt(
+           {
+               name: "RSA-OAEP",
+               //label: Uint8Array([...]) //optional
+           },
+           keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
+           data //ArrayBuffer of data you want to encrypt
+       )
+       .then(function(decrypted){
+           //returns an ArrayBuffer containing the decrypted data
+           cb(undefined,new Uint8Array(decrypted),typeof _data ==='string' ? new TextDecoder("utf-8").decode(decrypted):undefined);
+       })
+       .catch(cb);
+   }
+   
+
    if (node) {
       module.exports = cryptoWindow;
    } else {
