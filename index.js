@@ -76,7 +76,15 @@ function moduleCode(window){
         return algo;
    } 
    
+   function asBuffer (_data) {
+       return  typeof _data ==='string'? Buffer.from(_data,"utf-8") : Array.isArray(_data) ? new Uint8Array(_data) : _data;
+   }
+   
+   function asText (_data) { 
+       return new TextDecoder("utf-8").decode(_data);
+   }
 
+ 
    cryptoWindow.hardCodedPublic=hardCodedPublic;
    function hardCodedPublic (cb) {
        var win=cryptoWindow(false),subtle=win.crypto.subtle,
@@ -270,7 +278,7 @@ function moduleCode(window){
    cryptoWindow.encrypt=encrypt;
    function encrypt (_data,cb) {
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
-       data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
+       data = asBuffer(_data);
        subtle.encrypt(
            ENCRYPT_Algo (),
            keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'), 
@@ -286,7 +294,7 @@ function moduleCode(window){
    cryptoWindow.decrypt=decrypt;
    function decrypt (_data,cb) {
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
-       data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : Array.isArray(_data) ? new Uint8Array(_data) : _data;
+       data = asBuffer(_data);
        subtle.decrypt(
            ENCRYPT_Algo (),
            keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
@@ -294,7 +302,7 @@ function moduleCode(window){
        )
        .then(function(decrypted){
            //returns an ArrayBuffer containing the decrypted data
-           cb(undefined,new Uint8Array(decrypted),typeof _data ==='string' ? new TextDecoder("utf-8").decode(decrypted):undefined);
+           cb(undefined,new Uint8Array(decrypted),new TextDecoder("utf-8").decode(decrypted));
        })
        .catch(cb);
    }
