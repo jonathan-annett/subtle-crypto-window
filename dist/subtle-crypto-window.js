@@ -71,7 +71,7 @@
    } 
    
    function isBuffer (x) {
-       return typeof x==='object'&& x.constructor && isBuffer.classes.indexOf(x.constructor.name);
+       return typeof x==='object'&& x.constructor && isBuffer.classes.indexOf(x.constructor.name)>=0;
    }
    
    isBuffer.classes = node ? ["Buffer","ArrayBuffer"] : ["Uint8Array","ArrayBuffer"];
