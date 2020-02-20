@@ -349,12 +349,14 @@ function moduleCode(window){
    function encrypt_string(str,cb) {
        if (str.length<=encrypt.max) {
            console.log("encrypt_string-->encrypt:",str.length,"chars");
-           return encrypt(str,cb);
+           return encrypt(str,function(err,enc_str){
+               if (err) return cb(err);
+               cb(undefined,{str:enc_str});
+           });
        }
        console.log("encrypt_string-->encrypt_chain:",str.length,"chars");
        encrypt_chain(str,function(err,encrypted){
            if (err) return cb(err);
-           
            cb(undefined,{length:str.length,parts:encrypted});
        });
    }
@@ -411,9 +413,16 @@ function moduleCode(window){
                cb(undefined,parts.map(asText).join(''));
             });
         } else {
-            return decrypt (str,function(err,buf,decoded_str){
-                cb(err,decoded_str);
-            });
+            if (typeof str==='object' && typeof str.str) {
+                decrypt(str.str,function(err,decoded){
+                   if (err) return cb(err);
+                   cb(undefined,asText(decoded));
+                });
+            } else {
+                return decrypt (str,function(err,buf,decoded_str){
+                    cb(err,decoded_str);
+                });
+            }
         }
        
    }
