@@ -278,7 +278,63 @@
        })
        .catch(cb);
    }
+   encrypt.max = 212;
    
+   
+   cryptoWindow.encrypt_chain = encrypt_chain;
+   
+   function encrypt_chain(data,cb) {
+       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
+           key = keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'),
+           max=encrypt.max,twice=max*2,arr = [];
+           
+       while (data.length>twice) {
+           arr.push(asBuffer(data.substr(0,max)));
+           data=data.substr(max);
+       }
+       if (data.length>0) {
+          if (data.length>max) {
+              var half = Math.floor(data.length/2);
+              arr.push(asBuffer(data.substr(0,half)));
+              data=data.substr(half);
+          }
+          arr.push(asBuffer(data));
+       }
+       
+       var promises = arr.map(function(_data){
+           return subtle.encrypt(
+                      ENCRYPT_Algo (),
+                      key, 
+                      data //ArrayBuffer of data you want to encrypt
+                  );
+       });
+       
+       return Promise.all(promises).then(resolve).catch(cb);
+       
+       function resolve (encrypted) {
+           return cb (undefined,encrypted);
+       } 
+        
+   }
+   
+   cryptoWindow.encrypt_string = encrypt_string;
+   function encrypt_string(str,cb) {
+       if (str.length<=encrypt.max) {
+           return encrypt_chain(str,cb);
+       }
+       encrypt_chain(str,function(err,encrypted){
+           if (err) return cb(err);
+           
+           cb(undefined,{length:str.length,parts:encrypted});
+       });
+   }
+   
+   cryptoWindow.encrypt_obj = encrypt_obj;
+   function encrypt_obj(obj,cb) {
+       encrypt_string(JSON.stringify(obj),cb);
+   }
+   
+
    cryptoWindow.decrypt=decrypt;
    function decrypt (_data,cb) {
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
@@ -293,6 +349,52 @@
            cb(undefined,new Uint8Array(decrypted),new TextDecoder("utf-8").decode(decrypted));
        })
        .catch(cb);
+   }
+   
+   cryptoWindow.decrypt_chain=decrypt_chain;
+   function decrypt_chain(chain,cb) {
+       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
+       
+       var promises = chain.map(function(_data){
+           var data = asBuffer(_data) ;
+           return subtle.decrypt(
+                      ENCRYPT_Algo (),
+                      keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
+                      data //ArrayBuffer of data you want to encrypt
+                  )
+       });
+       
+       return Promise.all(promises).then(resolve).catch(cb);
+       
+       function resolve (parts) {
+           return cb (undefined,parts);
+       } 
+       
+       
+   }
+    
+   cryptoWindow.decrypt_string=decrypt_string;
+   function decrypt_string(str,cb) {
+        if (typeof str==='object' && typeof str.length==='number' && str.parts) {
+            decrypt_chain(str,function(err,parts){
+               if (err) return cb(err);
+               cb(undefined,parts.map(asText).join(''));
+            });
+        } else {
+            return decrypt (str,function(err,buf,decoded_str){
+                cb(err,decoded_str);
+            });
+        }
+       
+   }
+   
+   
+   cryptoWindow.decrypt_obj=decrypt_obj;
+   function decrypt_obj (code,cb) {
+       decrypt_string(str,function(err,json){
+           if (err) return cb(err);
+           return cb(undefined,JSON.parse(json));
+       });
    }
    
 
