@@ -382,7 +382,7 @@
    cryptoWindow.decrypt_string=decrypt_string;
    function decrypt_string(str,cb) {
         if (typeof str==='object' && typeof str.length==='number' && str.parts) {
-            decrypt_chain(str,function(err,parts){
+            decrypt_chain(str.parts,function(err,parts){
                if (err) return cb(err);
                cb(undefined,parts.map(asText).join(''));
             });
