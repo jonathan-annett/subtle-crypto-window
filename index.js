@@ -406,8 +406,8 @@ function moduleCode(window){
    
    
    cryptoWindow.decrypt_obj=decrypt_obj;
-   function decrypt_obj (code,cb) {
-       decrypt_string(str,function(err,json){
+   function decrypt_obj (encoded_json,cb) {
+       decrypt_string(encoded_json,function(err,json){
            if (err) return cb(err);
            return cb(undefined,JSON.parse(json));
        });
