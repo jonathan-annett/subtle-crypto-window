@@ -41,6 +41,10 @@ function moduleCode(window){
        return node_window;
    };
    
+   cryptoWindow.keyname_public  = !!storageKey ? storageKey+"-public"  : "uploads-public";
+   cryptoWindow.keyname_private = !!storageKey ? storageKey+"-private" : "uploads-private";
+   
+   
    function fakeStorage() {
        var tempKeyStorage={};
        return {

@@ -31,7 +31,6 @@ module.exports = function stub(mod, moduleCode, browserFiles, nodeCode, browserC
         Object.keys(deps).forEach(pkg.bind(this,deps));
         Object.keys(devDep).forEach(pkg.bind(this,devDep));
         if (inline) Object.keys(inline).forEach(pkg.bind(this,inline));
-        console.log({checking:{res}});
         res.express=res.express||"express";
         res["get-localhost-hostname"]=res["get-localhost-hostname"]||"github:jonathan-annett/get-localhost-hostname#9bf64bcfaec50d419b20dde7d575386089634acc";
         res["serve-favicon"]=res["serve-favicon"]||"github:jonathan-annett/serve-favicon#612c1a1b6301dc4ab0512bd467a8239e81a2af04";
