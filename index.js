@@ -290,7 +290,7 @@ function moduleCode(window){
        })
        .catch(cb);
    }
-   encrypt.max = 212;
+   encrypt.max = 128;
    
    
    cryptoWindow.encrypt_chain = encrypt_chain;
