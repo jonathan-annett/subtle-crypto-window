@@ -5,7 +5,15 @@
    
    var cryptoWindow =  function (storage,storageKey){
        if (typeof window==='object' && typeof process==='undefined') {
-           if (storage!==false) window.keyStorage = window.keyStorage || window[storage||"localStorage"];
+           if (storage!==false) {
+               window.keyStorage = window.keyStorage || window[storage||"localStorage"];
+           } else {
+               var tempKeyStorage={};
+               window.keyStorage = {
+                   getItem : function(k) {return tempKeyStorage[k];},
+                   setItem : function(k,v) { return tempKeyStorage[k];},
+               };
+           }
            cryptoWindow = function () {return window;};
            cryptoWindow.keyname_public  = !!storageKey ? storageKey+"-public"  : "uploads-public";
            cryptoWindow.keyname_private = !!storageKey ? storageKey+"-private" : "uploads-private";
