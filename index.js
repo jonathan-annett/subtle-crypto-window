@@ -8,7 +8,7 @@ var options = {
     npmPackages  : npms,
     getApp       : getApp
 };
-require("../@")(module,options);
+require("./@")(module,options);
 
 function moduleCode(window){
    (function (node) {
