@@ -100,7 +100,7 @@ module.exports = function stub(mod, moduleCode, browserFiles, nodeCode, browserC
         
     npmrequire.dirname = dirname;
     
-    if (mod===process.mainModule && process.argv.indexOf('--build') > 0 || process.argv.indexOf('--demo') > 0) {
+    if (mod===process.mainModule && (process.argv.indexOf('--build') > 0 || process.argv.indexOf('--demo') > 0)) {
         fs.mkdir(dist, function() {
             var src = stripFuncHeader(mod.exports);
             fs.writeFile(path.join(dist, pkg + '.js'), src, function() {
@@ -134,7 +134,7 @@ module.exports = function stub(mod, moduleCode, browserFiles, nodeCode, browserC
 
                         copyFiles(function() {
                             
-                            if (process.argv.indexOf('--demo') > 0) {
+                            if (mod===process.mainModule && process.argv.indexOf('--demo') > 0) {
                                 
                                 npmPackages=getPkgList(npmPackages);
 
