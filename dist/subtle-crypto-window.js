@@ -200,7 +200,7 @@
        )
        .then(function(theKey){
            //returns a publicKey (or privateKey if you are importing a private key)
-           if (!nosave) keyStorage.setItem(cryptoWindow.keyname_public+suffix)
+           if (!nosave) keyStorage.setItem(cryptoWindow.keyname_public+suffix,theKey);
            cb(undefined,theKey);
        })
        .catch(cb);
