@@ -314,6 +314,7 @@ function moduleCode(window){
        }
        
        var promises = arr.map(function(_data){
+           var data = asBuffer(_data) ;
            return subtle.encrypt(
                       ENCRYPT_Algo (),
                       key, 
