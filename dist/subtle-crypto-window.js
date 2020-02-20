@@ -37,7 +37,7 @@
    function fakeStorage() {
        var tempKeyStorage={};
        return {
-           getItem : function(k) {return tempKeyStorage[k];},
+           getItem : function(k)   { return tempKeyStorage[k];},
            setItem : function(k,v) { return (tempKeyStorage[k]=v);},
        };
    }
@@ -301,12 +301,13 @@
           arr.push(asBuffer(data));
        }
        
-       var promises = arr.map(function(_data){
-           var data = asBuffer(_data) ;
+
+       var promises = arr.map(function(_data,ix){
+           console.log("element",ix,"is",_data.length,"chars");
            return subtle.encrypt(
                       ENCRYPT_Algo (),
                       key, 
-                      data //ArrayBuffer of data you want to encrypt
+                      _data //ArrayBuffer of data you want to encrypt
                   );
        });
        
@@ -321,8 +322,10 @@
    cryptoWindow.encrypt_string = encrypt_string;
    function encrypt_string(str,cb) {
        if (str.length<=encrypt.max) {
-           return encrypt_chain(str,cb);
+           console.log("encrypt_string-->encrypt:",str.length,"chars");
+           return encrypt(str,cb);
        }
+       console.log("encrypt_string-->encrypt_chain:",str.length,"chars");
        encrypt_chain(str,function(err,encrypted){
            if (err) return cb(err);
            
