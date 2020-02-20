@@ -384,13 +384,13 @@ function moduleCode(window){
    cryptoWindow.decrypt_chain=decrypt_chain;
    function decrypt_chain(chain,cb) {
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
-       
+       var key=keyStorage.getItem(cryptoWindow.keyname_private+'-crypto');
        var promises = chain.map(function(_data){
-           var data = asBuffer(_data) ;
+           var data = asBufferBrowser(_data) ;
            return subtle.decrypt(
                       ENCRYPT_Algo (),
-                      keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
-                      data //ArrayBuffer of data you want to encrypt
+                      key, 
+                      data
                   )
        });
        
