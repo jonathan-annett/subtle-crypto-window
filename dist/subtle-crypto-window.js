@@ -376,7 +376,7 @@
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
        var key=keyStorage.getItem(cryptoWindow.keyname_private+'-crypto');
        var promises = chain.map(function(_data){
-           var data = asBufferBrowser(_data) ;
+           var data = asBuffer(_data) ;
            return subtle.decrypt(
                       ENCRYPT_Algo (),
                       key, 
@@ -402,12 +402,12 @@
             });
         } else {
             if (typeof str==='object' && typeof str.str) {
-                decrypt(str.str,function(err,decoded){
+                decrypt(asBuffer(str.str),function(err,decoded){
                    if (err) return cb(err);
                    cb(undefined,asText(decoded));
                 });
             } else {
-                return decrypt (str,function(err,buf,decoded_str){
+                return decrypt (asBuffer(str),function(err,buf,decoded_str){
                     cb(err,decoded_str);
                 });
             }
