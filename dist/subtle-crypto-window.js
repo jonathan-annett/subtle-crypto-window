@@ -72,7 +72,7 @@
    
    
    function asBufferNode (_data) {
-       return  typeof _data ==='string'? Buffer.from(_data,"utf-8") : Array.isArray(_data) ? Buffer.from(_data) : _data;
+       return  typeof _data ==='string'? new Uint8Array(Buffer.from(_data,"utf-8")) : Array.isArray(_data) ? new Uint8Array(_data) : _data;
    }
    function asBufferBrowser (_data) {
        return  typeof _data ==='string'? new Uint8Array(_data) : Array.isArray(_data) ? new Uint8Array(_data) : _data;
