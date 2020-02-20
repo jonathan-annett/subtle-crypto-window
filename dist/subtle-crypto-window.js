@@ -274,7 +274,7 @@
    cryptoWindow.decrypt=decrypt;
    function decrypt (_data,cb) {
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
-       data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
+       data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : Array.isArray(_data) ? new Uint8Array(_data) : _data;
        subtle.decrypt(
            ENCRYPT_Algo (),
            keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
