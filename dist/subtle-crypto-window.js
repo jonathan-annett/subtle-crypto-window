@@ -38,7 +38,7 @@
        var tempKeyStorage={};
        return {
            getItem : function(k) {return tempKeyStorage[k];},
-           setItem : function(k,v) { return tempKeyStorage[k];},
+           setItem : function(k,v) { return (tempKeyStorage[k]=v);},
        };
    }
 
