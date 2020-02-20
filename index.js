@@ -326,7 +326,9 @@ function moduleCode(window){
        return Promise.all(promises).then(resolve).catch(cb);
        
        function resolve (encrypted) {
-           return cb (undefined,encrypted);
+           return cb (undefined,encrypted.map(function(el){
+               return Array.from(new Uint8Array(el));
+           }));
        } 
         
    }
