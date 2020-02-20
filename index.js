@@ -82,12 +82,23 @@ function moduleCode(window){
         return algo;
    } 
    
+   function isBuffer (x) {
+       return typeof x==='object'&& x.constructor && isBuffer.classes.indexOf(x.constructor.name);
+   }
    
+   isBuffer.classes = node ? ["Buffer","ArrayBuffer"] : ["Uint8Array","ArrayBuffer"];
+
    function asBufferNode (_data) {
-       return  typeof _data ==='string'? new Uint8Array(Buffer.from(_data,"utf-8")) : Array.isArray(_data) ? new Uint8Array(_data) : _data;
+       return isBuffer(_data) ? _data :
+              typeof _data ==='string' ? Buffer.from(_data,"utf-8") :
+              Array.isArray(_data)     ? Buffer.from(_data) :
+              _data;
    }
    function asBufferBrowser (_data) {
-       return  typeof _data ==='string'? new Uint8Array(_data) : Array.isArray(_data) ? new Uint8Array(_data) : _data;
+       return isBuffer(_data) ? _data :
+              typeof _data ==='string' ? new Uint8Array(_data) :
+              Array.isArray(_data) ? new Uint8Array(_data) :
+              _data;
    }
    
    var asBuffer = node ? asBufferNode : asBufferBrowser;
