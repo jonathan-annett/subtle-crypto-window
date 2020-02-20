@@ -306,12 +306,8 @@ function moduleCode(window){
    }
    
 
-   if (node) {
-      module.exports = cryptoWindow;
-   } else {
-       window.cryptoWindow = cryptoWindow;
-   }
-   
+   window.cryptoWindow = cryptoWindow;
+
    //generateKeys(console.log.bind(console,"generateKeys:"));
    //getPrivate (console.log.bind(console,"getPrivate:"));
    //getPublic (console.log.bind(console,"getPublic:"));
