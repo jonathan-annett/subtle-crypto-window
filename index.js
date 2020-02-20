@@ -37,12 +37,13 @@ function moduleCode(window){
        node_window = { crypto : { subtle : subtle }, keyStorage : keyStorage};
        
        cryptoWindow = function () {return node_window;};
+       cryptoWindow.keyname_public  = !!storageKey ? storageKey+"-public"  : "uploads-public";
+       cryptoWindow.keyname_private = !!storageKey ? storageKey+"-private" : "uploads-private";
        
        return node_window;
    };
    
-   cryptoWindow.keyname_public  = !!storageKey ? storageKey+"-public"  : "uploads-public";
-   cryptoWindow.keyname_private = !!storageKey ? storageKey+"-private" : "uploads-private";
+
    
    
    function fakeStorage() {
