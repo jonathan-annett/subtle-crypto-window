@@ -12,31 +12,32 @@ module.exports = function stub(mod, moduleCode, browserFiles, nodeCode, browserC
     
     function package_json() {
         try {
-        return package_json.cache || (package_json.cache=JSON.parse(require("fs").readFileSync("./package.json","utf8")));
+            return package_json.cache || (package_json.cache=JSON.parse(require("fs").readFileSync("./package.json","utf8")));
         } catch (e) {
             return {};
         }
     }
     
-    function devDependancies() {
-        return package_json().devDependancies||{};
+    function devDependencies() {
+        return package_json().devDependencies||{};
     }
     
-    function dependancies() {
-        return package_json().dependancies||{};
+    function dependencies() {
+        return package_json().dependencies||{};
     }
     
     function getPkgList(inline) {
-        var res={},deps = dependancies(),devDep = devDependancies();
+        var res={},deps = dependencies(),devDep = devDependencies();
         Object.keys(deps).forEach(pkg.bind(this,deps));
         Object.keys(devDep).forEach(pkg.bind(this,devDep));
         if (inline) Object.keys(inline).forEach(pkg.bind(this,inline));
+        console.log({checking:{res}});
         res.express=res.express||"express";
         res["get-localhost-hostname"]=res["get-localhost-hostname"]||"github:jonathan-annett/get-localhost-hostname#9bf64bcfaec50d419b20dde7d575386089634acc";
         res["serve-favicon"]=res["serve-favicon"]||"github:jonathan-annett/serve-favicon#612c1a1b6301dc4ab0512bd467a8239e81a2af04";
         return res;
-        function pkg(dep,id){
-            var ver,pkgLine=dep[id];
+        function pkg(deps,id){
+            var ver,pkgLine=deps[id];
             switch (true) {
                 case !!(ver=/^\^(?<version>)/.exec(pkgLine)) : 
                 case !!(ver=/^\~(?<version>)/.exec(pkgLine)) : 
