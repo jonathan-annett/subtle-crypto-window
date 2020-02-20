@@ -105,7 +105,7 @@ function moduleCode(window){
        } else {
            encdec=!!encdec;
        }
-       var suffix=encdec ? '-crypto':''
+       var suffix=encdec ? '-crypto':'';
        
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
        
@@ -149,16 +149,66 @@ function moduleCode(window){
    }
    
    cryptoWindow.getPrivate=getPrivate;
-   function getPrivate (cb) {
+   function getPrivate (encdec,cb){
+       if (typeof encdec==='function') {
+           cb=encdec;
+           encdec=false;
+       } else {
+           encdec=!!encdec;
+       }
+       var suffix=encdec ? '-crypto':'';
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
        
-       cb(keyStorage.getItem(cryptoWindow.keyname_private));
+       cb(keyStorage.getItem(cryptoWindow.keyname_private+suffix));
    }
    
    cryptoWindow.getPublic=getPublic;
-   function getPublic (cb) {
+   function getPublic (encdec,cb){
+       if (typeof encdec==='function') {
+           cb=encdec;
+           encdec=false;
+       } else {
+           encdec=!!encdec;
+       }
+       var suffix=encdec ? '-crypto':'';
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
-       cb(keyStorage.getItem(cryptoWindow.keyname_public));
+       cb(keyStorage.getItem(cryptoWindow.keyname_public+suffix));
+   }
+   
+   cryptoWindow.importPublic=importPublic;
+   function importPublic (keydata,encdec,cb,nosave){
+       if (typeof encdec==='function') {
+          cb=encdec;
+          encdec=false;
+       } else {
+          encdec=!!encdec;
+       }
+       var suffix=encdec ? '-crypto':'';
+       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
+       
+       subtle.importKey(
+           "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
+           keydata,
+           encdec ? 
+           {   //these are the algorithm options
+               name: "RSA-OAEP",
+               hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+           }:
+           {   //these are the algorithm options
+               name: "RSASSA-PKCS1-v1_5",
+               hash: {name: "SHA-1"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+           },
+           false, //whether the key is extractable (i.e. can be used in exportKey)
+           encdec ?["encrypt"] : ["verify"] 
+       )
+       .then(function(theKey){
+           //returns a publicKey (or privateKey if you are importing a private key)
+           if (!nosave) keyStorage.setItem(cryptoWindow.keyname_public+suffix)
+           cb(undefined,theKey);
+       })
+       .catch(cb);
+       
+       
    }
    
    cryptoWindow.exportPublic=exportPublic;
