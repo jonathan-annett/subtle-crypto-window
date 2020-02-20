@@ -54,17 +54,22 @@ function moduleCode(window){
        };
    }
    
-   function RSA_OAEP_Algo (full) {
+   function ENCRYPT_Algo (iv) {
        var algo = {
-            name: "RSA-OAEP",
-            modulusLength: 2048, //can be 1024, 2048, or 4096
-            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-            hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
+          name: "AES-GCM",
+          length: 256, //can be  128, 192, or 256
        };
+       if (iv===true) {
+           algo.iv = webcrypto.getRandomValues(new Uint8Array(12));
+       } else {
+           if (iv!==false) {
+               algo.iv=iv;
+           }
+       }
        return algo;
    }
    
-   function RSASSA_PKCS1(full)  {
+   function SIGN_ALGO(full)  {
        var algo = {
             name: "RSASSA-PKCS1-v1_5",
             modulusLength: 1024,
@@ -91,7 +96,7 @@ function moduleCode(window){
        subtle.importKey(
            "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
            exported,
-           RSASSA_PKCS1(false),
+           SIGN_ALGO(false),
            false, //whether the key is extractable (i.e. can be used in exportKey)
            ["verify"] //"verify" for public key import, "sign" for private key imports
        )
@@ -111,7 +116,7 @@ function moduleCode(window){
            var win=cryptoWindow(false),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
            data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
            subtle.verify(
-               RSASSA_PKCS1(false),
+               SIGN_ALGO(false),
                publicKey, //from generateKey or importKey above
                signature, //ArrayBuffer of the signature
                data //ArrayBuffer of the data
@@ -139,7 +144,7 @@ function moduleCode(window){
 
        // generating RSA key
        subtle.generateKey(
-           encdec ? RSA_OAEP_Algo (true) : RSASSA_PKCS1(true),
+           encdec ? ENCRYPT_Algo (false) : SIGN_ALGO(true),
            false,
            encdec ? ["encrypt", "decrypt"] : ["sign", "verify"]
          )
@@ -205,7 +210,7 @@ function moduleCode(window){
            "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
            keydata,
            encdec ? 
-           RSA_OAEP_Algo (false): RSASSA_PKCS1 (false),
+           ENCRYPT_Algo (false): SIGN_ALGO (false),
            false, //whether the key is extractable (i.e. can be used in exportKey)
            encdec ?["encrypt"] : ["verify"] 
        )
@@ -238,7 +243,7 @@ function moduleCode(window){
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
        data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
        subtle.sign(
-           RSASSA_PKCS1 (false),
+           SIGN_ALGO (false),
            keyStorage.getItem(cryptoWindow.keyname_private), //from generateKey or importKey above
            data //ArrayBuffer of data you want to sign
        )
@@ -254,7 +259,7 @@ function moduleCode(window){
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
        data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
        subtle.verify(
-           RSASSA_PKCS1 (false),
+           SIGN_ALGO (false),
            keyStorage.getItem(cryptoWindow.keyname_public), //from generateKey or importKey above
            signature, //ArrayBuffer of the signature
            data //ArrayBuffer of the data
@@ -272,7 +277,7 @@ function moduleCode(window){
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
        data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
        subtle.encrypt(
-           RSA_OAEP_Algo (),
+           ENCRYPT_Algo (true),
            keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'), 
            data //ArrayBuffer of data you want to encrypt
        )
@@ -284,11 +289,11 @@ function moduleCode(window){
    }
    
    cryptoWindow.decrypt=decrypt;
-   function decrypt (_data,cb) {
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
+   function decrypt (_data,iv,cb) {
+       var win=cryptoWindow(iv),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
        data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
        subtle.decrypt(
-           RSA_OAEP_Algo (),
+           ENCRYPT_Algo (iv),
            keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
            data //ArrayBuffer of data you want to encrypt
        )
