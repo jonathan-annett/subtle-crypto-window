@@ -49,8 +49,14 @@ function moduleCode(window){
    function fakeStorage() {
        var tempKeyStorage={};
        return {
-           getItem : function(k)   { return tempKeyStorage[k];},
-           setItem : function(k,v) { return (tempKeyStorage[k]=v);},
+           getItem : function(k)   { 
+               console.log({fakeStorage:{getItem:k,value:tempKeyStorage[k]}});
+               return tempKeyStorage[k];
+           },
+           setItem : function(k,v) { 
+               console.log({fakeStorage:{setItem:k,value:v}});
+               return (tempKeyStorage[k]=v);
+           },
        };
    }
    
