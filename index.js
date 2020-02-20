@@ -309,7 +309,7 @@ function moduleCode(window){
        )
        .then(function(encrypted){
            //returns an ArrayBuffer containing the encrypted data
-           cb(undefined,new Uint8Array(encrypted),data,_data);
+           cb(undefined,Array.from(new Uint8Array(encrypted)),data,_data);
        })
        .catch(cb);
    }
