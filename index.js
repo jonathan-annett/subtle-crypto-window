@@ -54,18 +54,13 @@ function moduleCode(window){
        };
    }
    
-   function ENCRYPT_Algo (iv) {
+   function ENCRYPT_Algo (full) {
        var algo = {
-          name: "AES-GCM",
-          length: 256, //can be  128, 192, or 256
+            name: "RSA-OAEP",
+            modulusLength: 2048, //can be 1024, 2048, or 4096
+            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+            hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
        };
-       if (iv===true) {
-           algo.iv = webcrypto.getRandomValues(new Uint8Array(12));
-       } else {
-           if (iv!==false) {
-               algo.iv=iv;
-           }
-       }
        return algo;
    }
    
@@ -144,8 +139,8 @@ function moduleCode(window){
 
        // generating RSA key
        subtle.generateKey(
-           encdec ? ENCRYPT_Algo (false) : SIGN_ALGO(true),
-           false,
+           encdec ? ENCRYPT_Algo (true) : SIGN_ALGO(true),
+           true,
            encdec ? ["encrypt", "decrypt"] : ["sign", "verify"]
          )
          .then(function(keyPairs){
@@ -277,7 +272,7 @@ function moduleCode(window){
        var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
        data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
        subtle.encrypt(
-           ENCRYPT_Algo (true),
+           ENCRYPT_Algo (),
            keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'), 
            data //ArrayBuffer of data you want to encrypt
        )
@@ -289,11 +284,11 @@ function moduleCode(window){
    }
    
    cryptoWindow.decrypt=decrypt;
-   function decrypt (_data,iv,cb) {
-       var win=cryptoWindow(iv),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
+   function decrypt (_data,cb) {
+       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
        data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
        subtle.decrypt(
-           ENCRYPT_Algo (iv),
+           ENCRYPT_Algo (),
            keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
            data //ArrayBuffer of data you want to encrypt
        )
