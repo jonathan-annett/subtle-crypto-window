@@ -123,7 +123,7 @@ function moduleCode(window){
            "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
            exported,
            SIGN_ALGO(false),
-           false, //whether the key is extractable (i.e. can be used in exportKey)
+           true, //whether the key is extractable (i.e. can be used in exportKey)
            ["verify"] //"verify" for public key import, "sign" for private key imports
        )
        .then(function(publicKey){
@@ -237,7 +237,7 @@ function moduleCode(window){
            keydata,
            encdec ? 
            ENCRYPT_Algo (false): SIGN_ALGO (false),
-           false, //whether the key is extractable (i.e. can be used in exportKey)
+           true, //whether the key is extractable (i.e. can be used in exportKey)
            encdec ?["encrypt"] : ["verify"] 
        )
        .then(function(theKey){
