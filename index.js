@@ -18,11 +18,7 @@ function moduleCode(window){
            if (storage!==false) {
                window.keyStorage = window.keyStorage || window[storage||"localStorage"];
            } else {
-               var tempKeyStorage={};
-               window.keyStorage = {
-                   getItem : function(k) {return tempKeyStorage[k];},
-                   setItem : function(k,v) { return tempKeyStorage[k];},
-               };
+               window.keyStorage =fakeStorage() ;
            }
            cryptoWindow = function () {return window;};
            cryptoWindow.keyname_public  = !!storageKey ? storageKey+"-public"  : "uploads-public";
@@ -37,13 +33,21 @@ function moduleCode(window){
          directory: storage||"key_storage"
        }),
        subtle = webcrypto.subtle,
-       keyStorage = webcrypto.keyStorage,
+       keyStorage = storage ? webcrypto.keyStorage : fakeStorage() ,
        node_window = { crypto : { subtle : subtle }, keyStorage : keyStorage};
        
        cryptoWindow = function () {return node_window;};
        
        return node_window;
    };
+   
+   function fakeStorage() {
+       var tempKeyStorage={};
+       return {
+           getItem : function(k) {return tempKeyStorage[k];},
+           setItem : function(k,v) { return tempKeyStorage[k];},
+       };
+   }
 
    cryptoWindow.hardCodedPublic=hardCodedPublic;
    function hardCodedPublic (cb) {
