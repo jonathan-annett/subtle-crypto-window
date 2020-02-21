@@ -27,11 +27,12 @@ function moduleCode(window){
        }
        var 
        
-       WebCrypto = require("node-webcrypto-ossl"),
+       /*WebCrypto = require("node-webcrypto-ossl"),
        
        webcrypto = new WebCrypto(storage===false?undefined:{
          directory: storage||"key_storage"
-       }),
+       }),*/
+       webcrypto = require("crypto"),
        subtle = webcrypto.subtle,
        keyStorage = storage ? webcrypto.keyStorage : fakeStorage() ,
        node_window = { crypto : { subtle : subtle }, keyStorage : keyStorage};
