@@ -51,7 +51,7 @@
    function loadKey(keyName,cb) {
           var win=cryptoWindow(),k = win.keyStorage.getItem(keyName);
           if ( k ) {
-              win.subtle.exportKey(
+              win.crypto.subtle.exportKey(
                    "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
                    k //can be a publicKey or privateKey, as long as extractable was true
                )
