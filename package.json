@@ -8,8 +8,7 @@
   "description": "newly created repo",
   "license": "MIT",
   "dependencies": {
-    "node-webcrypto-ossl": "^1.0.48",
-    "subtle": "^0.1.8"
+    "node-webcrypto-ossl": "^1.0.48"
   },
   "devDependencies": {
     "express": "^4.17.1",
