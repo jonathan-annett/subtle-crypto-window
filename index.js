@@ -90,8 +90,8 @@ function moduleCode(window){
           //Don't re-use counters!
           //Always use a new counter every time your encrypt!
           counter: new Uint8Array(16),
-          length: 128, //can be 1-128
-      };
+          length: 256,  
+       };
        return algo;
    }
    
@@ -205,7 +205,7 @@ function moduleCode(window){
    cryptoWindow.generateKeys=generateKeys;
    function generateKeys(encdec,cb){
        var opts=getEncDecOpts(encdec,cb);
-
+       delete opts.algo.counter;
        // generating RSA key
        opts.subtle.generateKey(
            opts.algo,
