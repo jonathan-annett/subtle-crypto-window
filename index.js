@@ -85,6 +85,13 @@ function moduleCode(window){
             publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
             hash: {name: "SHA-1"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
        };
+       algo = {
+          name: "AES-CTR",
+          //Don't re-use counters!
+          //Always use a new counter every time your encrypt!
+          counter: new Uint8Array(16),
+          length: 128, //can be 1-128
+      };
        return algo;
    }
    
