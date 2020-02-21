@@ -31,7 +31,6 @@
        return node_window;
    };
    
-
    
    
    function fakeStorage() {
@@ -47,6 +46,25 @@
            },
        };
    }
+   
+   
+   function loadKey(keyName,cb) {
+          var k = cryptoWindow.keyStorage[keyName];
+          if ( k ) {
+              cryptoWindow.subtle.exportKey(
+                   "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
+                   k //can be a publicKey or privateKey, as long as extractable was true
+               )
+               .then(function(keyData){
+                   //returns the exported key data
+                   cb(undefined,k,keyData,keyName);
+               })
+               .catch(cb);
+          }  else {
+              cb(new Error("notFound:"+keyName));
+          }
+   }
+   
    
    function ENCRYPT_Algo () {
        var algo = {
@@ -277,16 +295,24 @@
    function encrypt (_data,cb) {
        var opts=getEncDecOpts(true,cb);
        var data = asBuffer(_data);
-       opts.subtle.encrypt(
-           opts.algo,
-           opts.keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'), 
-           data //ArrayBuffer of data you want to encrypt
-       )
-       .then(function(encrypted){
-           //returns an ArrayBuffer containing the encrypted data
-           opts.cb(undefined,Array.from(new Uint8Array(encrypted)),data,_data);
-       })
-       .catch(opts.cb);
+       loadKey(cryptoWindow.keyname_public+opts.suffix,function(err,key,keyData,keyName){
+           if (err) return opts.cb(err);
+           console.log({encryptionKey:{[keyName]:keyData}});
+           opts.subtle.encrypt(
+               opts.algo,
+               key, 
+               data //ArrayBuffer of data you want to encrypt
+           )
+           .then(function(encrypted){
+               //returns an ArrayBuffer containing the encrypted data
+            
+               opts.cb(undefined,Array.from(new Uint8Array(encrypted)),data,_data);
+           })
+           .catch(opts.cb);
+       }); 
+       
+      
+       
    }
    encrypt.max = 128;
    
@@ -294,41 +320,47 @@
    cryptoWindow.encrypt_chain = encrypt_chain;
    
    function encrypt_chain(data,cb) {
+       
        var opts=getEncDecOpts(true,cb);
-       var key = opts.keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'),
-           max=encrypt.max,twice=max*2,arr = [];
+       loadKey(cryptoWindow.keyname_public+opts.suffix,function(err,key,keyData,keyName){
            
-       while (data.length>twice) {
-           arr.push(asBuffer(data.substr(0,max)));
-           data=data.substr(max);
-       }
-       if (data.length>0) {
-          if (data.length>max) {
-              var half = Math.floor(data.length/2);
-              arr.push(asBuffer(data.substr(0,half)));
-              data=data.substr(half);
-          }
-          arr.push(asBuffer(data));
-       }
+            if (err) return opts.cb(err);
+            console.log({encryptionKey:{[keyName]:keyData}});
        
-
-       var promises = arr.map(function(_data,ix){
-           console.log("element",ix,"is",_data.length,"chars");
-           return opts.subtle.encrypt(
-                      ENCRYPT_Algo (),
-                      key, 
-                      _data //ArrayBuffer of data you want to encrypt
-                  );
+            var max=encrypt.max,twice=max*2,arr = [];
+                
+            while (data.length>twice) {
+                arr.push(asBuffer(data.substr(0,max)));
+                data=data.substr(max);
+            }
+            if (data.length>0) {
+               if (data.length>max) {
+                   var half = Math.floor(data.length/2);
+                   arr.push(asBuffer(data.substr(0,half)));
+                   data=data.substr(half);
+               }
+               arr.push(asBuffer(data));
+            }
+            
+     
+            var promises = arr.map(function(_data,ix){
+                console.log("element",ix,"is",_data.length,"chars");
+                return opts.subtle.encrypt(
+                           ENCRYPT_Algo (),
+                           key, 
+                           _data //ArrayBuffer of data you want to encrypt
+                       );
+            });
+            
+            return Promise.all(promises).then(resolve).catch(opts.cb);
+            
+            function resolve (encrypted) {
+                return opts.cb (undefined,encrypted.map(function(el){
+                    return Array.from(new Uint8Array(el));
+                }));
+            } 
        });
-       
-       return Promise.all(promises).then(resolve).catch(opts.cb);
-       
-       function resolve (encrypted) {
-           return opts.cb (undefined,encrypted.map(function(el){
-               return Array.from(new Uint8Array(el));
-           }));
-       } 
-        
+
    }
    
    cryptoWindow.encrypt_string = encrypt_string;
@@ -357,36 +389,49 @@
    function decrypt (_data,cb) {
        var opts=getEncDecOpts(true,cb);
        var data = asBuffer(_data);
-       opts.subtle.decrypt(
-           opts.algo,
-           opts.keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
-           data //ArrayBuffer of data you want to encrypt
-       )
-       .then(function(decrypted){
-           //returns an ArrayBuffer containing the decrypted data
-           opts.cb(undefined,new Uint8Array(decrypted),new TextDecoder("utf-8").decode(decrypted));
-       })
-       .catch(opts.cb);
+       loadKey(cryptoWindow.keyname_private+opts.suffix,function(err,key,keyData,keyName){
+           
+           if (err) return opts.cb(err);
+           console.log({decryptionKey:{[keyName]:keyData}});
+           
+           opts.subtle.decrypt(
+               opts.algo,
+               key, 
+               data 
+           )
+           .then(function(decrypted){
+               //returns an ArrayBuffer containing the decrypted data
+               opts.cb(undefined,new Uint8Array(decrypted),new TextDecoder("utf-8").decode(decrypted));
+           })
+           .catch(opts.cb);
+       });
    }
    
    cryptoWindow.decrypt_chain=decrypt_chain;
    function decrypt_chain(chain,cb) {
        var opts=getEncDecOpts(true,cb);
-       var key=opts.keyStorage.getItem(cryptoWindow.keyname_private+'-crypto');
-       var promises = chain.map(function(_data){
-           var data = asBuffer(_data) ;
-           return opts.subtle.decrypt(
-                      ENCRYPT_Algo (),
-                      key, 
-                      data
-                  )
+       loadKey(cryptoWindow.keyname_private+opts.suffix,function(err,key,keyData,keyName){
+       
+           if (err) return opts.cb(err);
+           console.log({decryptionKey:{[keyName]:keyData}});
+           var promises = chain.map(function(_data){
+               var data = asBuffer(_data) ;
+               return opts.subtle.decrypt(
+                          ENCRYPT_Algo (),
+                          key, 
+                          data
+                      )
+           });
+           
+           return Promise.all(promises).then(resolve).catch(cb);
+           
+           function resolve (parts) {
+               return cb (undefined,parts);
+           } 
        });
        
-       return Promise.all(promises).then(resolve).catch(cb);
        
-       function resolve (parts) {
-           return cb (undefined,parts);
-       } 
+
        
        
    }
