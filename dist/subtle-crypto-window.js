@@ -69,7 +69,7 @@
    function ENCRYPT_Algo () {
        var algo = {
             name: "RSA-OAEP",
-            modulusLength: 1024, //can be 1024, 2048, or 4096
+            modulusLength: 4096, //can be 1024, 2048, or 4096
             publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
             hash: {name: "SHA-256"}, //can be "SHA-1", "SHA-256", "SHA-384", or "SHA-512"
        };
@@ -176,7 +176,7 @@
            subtle:win.crypto.subtle,
            keyStorage:win.keyStorage,
            algo : encdec ? ENCRYPT_Algo () : SIGN_ALGO(),
-           chain_max : 64,
+           chain_max : 128,
        };
    } 
    
