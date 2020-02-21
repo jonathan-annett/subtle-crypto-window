@@ -310,7 +310,7 @@ function moduleCode(window){
        var data = asBuffer(_data);
        loadKey(cryptoWindow.keyname_public+opts.suffix,function(err,key,keyData,keyName){
            if (err) return opts.cb(err);
-           console.dir({encryptionKey:{[keyName]:keyData}},{depth:true});
+           console.dir({encryptionKey:{[keyName]:keyData}},{depth:null});
            opts.subtle.encrypt(
                opts.algo,
                key, 
@@ -336,7 +336,7 @@ function moduleCode(window){
        loadKey(cryptoWindow.keyname_public+opts.suffix,function(err,key,keyData,keyName){
            
             if (err) return opts.cb(err);
-            console.dir({encryptionKey:{[keyName]:keyData}},{depth:true});
+            console.dir({encryptionKey:{[keyName]:keyData}},{depth:null});
        
             var twice=opts.chain_max*2,arr = [];
                 
@@ -425,7 +425,7 @@ function moduleCode(window){
        loadKey(cryptoWindow.keyname_private+opts.suffix,function(err,key,keyData,keyName){
        
            if (err) return opts.cb(err);
-           console.dir({decryptionKey:{[keyName]:keyData}},{depth:true});
+           console.dir({decryptionKey:{[keyName]:keyData}},{depth:null});
            var promises = chain.map(function(_data){
                var data = asBuffer(_data) ;
                return opts.subtle.decrypt(
