@@ -8,12 +8,13 @@
   "description": "newly created repo",
   "license": "MIT",
   "dependencies": {
-    "node-webcrypto-ossl": "^1.0.48"
+    "node-webcrypto-ossl": "^1.0.48",
+    "subtle": "^0.1.8"
   },
   "devDependencies": {
-      "express": "^4.17.1",
-      "get-localhost-hostname": "github:jonathan-annett/get-localhost-hostname#9bf64bcfaec50d419b20dde7d575386089634acc",
-      "serve-favicon": "github:jonathan-annett/serve-favicon#612c1a1b6301dc4ab0512bd467a8239e81a2af04"
+    "express": "^4.17.1",
+    "get-localhost-hostname": "github:jonathan-annett/get-localhost-hostname#9bf64bcfaec50d419b20dde7d575386089634acc",
+    "serve-favicon": "github:jonathan-annett/serve-favicon#612c1a1b6301dc4ab0512bd467a8239e81a2af04"
   },
   "scripts": {
     "build": "node . --build",
