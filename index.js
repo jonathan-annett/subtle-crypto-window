@@ -187,7 +187,8 @@ function moduleCode(window){
            win :win,
            subtle:win.crypto.subtle,
            keyStorage:win.keyStorage,
-           algo : encdec ? ENCRYPT_Algo () : SIGN_ALGO()
+           algo : encdec ? ENCRYPT_Algo () : SIGN_ALGO(),
+           chain_max : 128,
        };
    } 
    
@@ -309,7 +310,7 @@ function moduleCode(window){
        var data = asBuffer(_data);
        loadKey(cryptoWindow.keyname_public+opts.suffix,function(err,key,keyData,keyName){
            if (err) return opts.cb(err);
-           console.log({encryptionKey:{[keyName]:keyData}});
+           console.dir({encryptionKey:{[keyName]:keyData}},{depth:true});
            opts.subtle.encrypt(
                opts.algo,
                key, 
@@ -326,9 +327,7 @@ function moduleCode(window){
       
        
    }
-   encrypt.max = 128;
-   
-   
+
    cryptoWindow.encrypt_chain = encrypt_chain;
    
    function encrypt_chain(data,cb) {
@@ -337,16 +336,16 @@ function moduleCode(window){
        loadKey(cryptoWindow.keyname_public+opts.suffix,function(err,key,keyData,keyName){
            
             if (err) return opts.cb(err);
-            console.log({encryptionKey:{[keyName]:keyData}});
+            console.dir({encryptionKey:{[keyName]:keyData}},{depth:true});
        
-            var max=encrypt.max,twice=max*2,arr = [];
+            var twice=opts.chain_max*2,arr = [];
                 
             while (data.length>twice) {
-                arr.push(asBuffer(data.substr(0,max)));
-                data=data.substr(max);
+                arr.push(asBuffer(data.substr(0,opts.chain_max)));
+                data=data.substr(opts.chain_max);
             }
             if (data.length>0) {
-               if (data.length>max) {
+               if (data.length>opts.chain_max) {
                    var half = Math.floor(data.length/2);
                    arr.push(asBuffer(data.substr(0,half)));
                    data=data.substr(half);
@@ -377,17 +376,18 @@ function moduleCode(window){
    
    cryptoWindow.encrypt_string = encrypt_string;
    function encrypt_string(str,cb) {
-       if (str.length<=encrypt.max) {
+       var opts=getEncDecOpts(true,cb);
+       if (str.length<=opts.chain_max) {
            console.log("encrypt_string-->encrypt:",str.length,"chars");
            return encrypt(str,function(err,enc_str){
-               if (err) return cb(err);
-               cb(undefined,{str:enc_str});
+               if (err) return opts.cb(err);
+               opts.cb(undefined,{str:enc_str});
            });
        }
        console.log("encrypt_string-->encrypt_chain:",str.length,"chars");
        encrypt_chain(str,function(err,encrypted){
-           if (err) return cb(err);
-           cb(undefined,{length:str.length,parts:encrypted});
+           if (err) return opts.cb(err);
+           opts.cb(undefined,{length:str.length,parts:encrypted});
        });
    }
    
@@ -425,11 +425,11 @@ function moduleCode(window){
        loadKey(cryptoWindow.keyname_private+opts.suffix,function(err,key,keyData,keyName){
        
            if (err) return opts.cb(err);
-           console.log({decryptionKey:{[keyName]:keyData}});
+           console.dir({decryptionKey:{[keyName]:keyData}},{depth:true});
            var promises = chain.map(function(_data){
                var data = asBuffer(_data) ;
                return opts.subtle.decrypt(
-                          ENCRYPT_Algo (),
+                          opts.algo,
                           key, 
                           data
                       )
