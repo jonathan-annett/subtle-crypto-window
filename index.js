@@ -60,7 +60,7 @@ function moduleCode(window){
        };
    }
    
-   function ENCRYPT_Algo (full) {
+   function ENCRYPT_Algo () {
        var algo = {
             name: "RSA-OAEP",
             modulusLength: 2048, //can be 1024, 2048, or 4096
@@ -70,7 +70,7 @@ function moduleCode(window){
        return algo;
    }
    
-   function SIGN_ALGO(full)  {
+   function SIGN_ALGO()  {
        var algo = {
             name: "RSASSA-PKCS1-v1_5",
             modulusLength: 1024,
@@ -155,163 +155,150 @@ function moduleCode(window){
        });
    }
    
-   cryptoWindow.generateKeys=generateKeys;
-   function generateKeys(encdec,cb){
+   
+   function getEncDecOpts(encdec,cb) {
        if (typeof encdec==='function') {
            cb=encdec;
            encdec=false;
-       } else {
-           encdec=!!encdec;
        }
-       var suffix=encdec ? '-crypto':'';
-       
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
-       
+       var win=cryptoWindow();
+       return {
+           cb     : cb,
+           encdec : !!encdec,
+           suffix : encdec ? '-crypto':'',
+           win :win,
+           subtle:win.crypto.subtle,
+           keyStorage:win.keyStorage,
+           algo : encdec ? ENCRYPT_Algo () : SIGN_ALGO()
+       };
+   } 
+   
+   
+   cryptoWindow.generateKeys=generateKeys;
+   function generateKeys(encdec,cb){
+       var opts=getEncDecOpts(encdec,cb);
 
        // generating RSA key
-       subtle.generateKey(
-           encdec ? ENCRYPT_Algo (true) : SIGN_ALGO(true),
+       opts.subtle.generateKey(
+           opts.algo,
            true,
-           encdec ? ["encrypt", "decrypt"] : ["sign", "verify"]
+           opts.encdec ? ["encrypt", "decrypt"] : ["sign", "verify"]
          )
          .then(function(keyPairs){
            /** 
             * saving private RSA key to KeyStorage
             * creates file ./key_storage/prvRSA-1024.json
             */
-           keyStorage.setItem(cryptoWindow.keyname_private+suffix, keyPairs.privateKey);
-           keyStorage.setItem(cryptoWindow.keyname_public+suffix, keyPairs.publicKey);
+           opts.keyStorage.setItem(cryptoWindow.keyname_private+opts.suffix, keyPairs.privateKey);
+           opts.keyStorage.setItem(cryptoWindow.keyname_public+opts.suffix,  keyPairs.publicKey);
+           opts.keyStorage.setItem(cryptoWindow.keyname_public+opts.suffix+"-local", keyPairs.publicKey);
            
-           subtle.exportKey(
+           opts.subtle.exportKey(
                "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
                keyPairs.publicKey //can be a publicKey or privateKey, as long as extractable was true
            )
            .then(function(keydata){
                //returns the exported key data
-               cb(undefined,keyPairs,keydata);
+               opts.cb(undefined,keyPairs,keydata);
            })
-           .catch(cb);
+           .catch(opts.cb);
          });
    }
    
    cryptoWindow.getPrivate=getPrivate;
    function getPrivate (encdec,cb){
-       if (typeof encdec==='function') {
-           cb=encdec;
-           encdec=false;
-       } else {
-           encdec=!!encdec;
-       }
-       var suffix=encdec ? '-crypto':'';
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
-       
-       cb(keyStorage.getItem(cryptoWindow.keyname_private+suffix));
+       var opts=getEncDecOpts(encdec,cb);
+       opts.cb(opts.keyStorage.getItem(cryptoWindow.keyname_private+opts.suffix));
    }
    
    cryptoWindow.getPublic=getPublic;
    function getPublic (encdec,cb){
-       if (typeof encdec==='function') {
-           cb=encdec;
-           encdec=false;
-       } else {
-           encdec=!!encdec;
-       }
-       var suffix=encdec ? '-crypto':'';
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
-       cb(keyStorage.getItem(cryptoWindow.keyname_public+suffix));
+       var opts=getEncDecOpts(encdec,cb);
+       opts.cb(opts.keyStorage.getItem(cryptoWindow.keyname_public+opts.suffix));
    }
    
    cryptoWindow.importPublic=importPublic;
    function importPublic (keydata,encdec,cb,nosave){
-       if (typeof encdec==='function') {
-          cb=encdec;
-          encdec=false;
-       } else {
-          encdec=!!encdec;
-       }
-       var suffix=encdec ? '-crypto':'';
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
-       
-       subtle.importKey(
+       var opts=getEncDecOpts(encdec,cb);
+       opts.subtle.importKey(
            "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
            keydata,
-           encdec ? 
-           ENCRYPT_Algo (false): SIGN_ALGO (false),
+           opts.algo,
            true, //whether the key is extractable (i.e. can be used in exportKey)
-           encdec ?["encrypt"] : ["verify"] 
+           opts.encdec ?["encrypt"] : ["verify"] 
        )
        .then(function(theKey){
            //returns a publicKey (or privateKey if you are importing a private key)
-           if (!nosave) keyStorage.setItem(cryptoWindow.keyname_public+suffix,theKey);
-           cb(undefined,theKey);
+           if (!nosave) opts.keyStorage.setItem(cryptoWindow.keyname_public+opts.suffix,theKey);
+           opts.cb(undefined,theKey);
        })
-       .catch(cb);
+       .catch(opts.cb);
        
        
    }
    
    cryptoWindow.exportPublic=exportPublic;
-   function exportPublic (cb) {
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
-       subtle.exportKey(
+   function exportPublic (encdec,cb) {
+       var opts=getEncDecOpts(encdec,cb);
+       opts.subtle.exportKey(
            "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
-           keyStorage.getItem(cryptoWindow.keyname_public) //can be a publicKey or privateKey, as long as extractable was true
+           opts.keyStorage.getItem(cryptoWindow.keyname_public+opts.suffix+'-local') //can be a publicKey or privateKey, as long as extractable was true
        )
        .then(function(keydata){
            //returns the exported key data
-           cb(undefined,keydata);
+           opts.cb(undefined,keydata);
        })
-       .catch(cb);
+       .catch(opts.cb);
    }
    
    cryptoWindow.sign=sign;
    function sign(_data,cb) {
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
-       data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
-       subtle.sign(
+       var opts=getEncDecOpts(false,cb),
+       data = asBuffer(_data);
+       opts.subtle.sign(
            SIGN_ALGO (false),
-           keyStorage.getItem(cryptoWindow.keyname_private), //from generateKey or importKey above
+           opts.keyStorage.getItem(cryptoWindow.keyname_private), //from generateKey or importKey above
            data //ArrayBuffer of data you want to sign
        )
        .then(function(signature){
            //returns an ArrayBuffer containing the signature
-           cb(undefined,new Uint8Array(signature),data,_data);
+           opts.cb(undefined,new Uint8Array(signature),data,_data);
        })
-       .catch(cb);
+       .catch(opts.cb);
    }
    
    cryptoWindow.verify=verify;
    function verify(_data,signature,cb) {
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
-       data = typeof _data ==='string'? Buffer.from(_data,"utf-8") : _data;
-       subtle.verify(
-           SIGN_ALGO (false),
-           keyStorage.getItem(cryptoWindow.keyname_public), //from generateKey or importKey above
+       var opts=getEncDecOpts(false,cb),
+       data = asBuffer(_data);
+       opts.subtle.verify(
+           opts.algo,
+           opts.keyStorage.getItem(cryptoWindow.keyname_public), //from generateKey or importKey above
            signature, //ArrayBuffer of the signature
            data //ArrayBuffer of the data
        )
        .then(function(isvalid){
            //returns a boolean on whether the signature is true or not
-           cb(undefined,isvalid,data,_data);
+           opts.cb(undefined,isvalid,data,_data);
        })
-       .catch(cb);
+       .catch(opts.cb);
    }
    
    
    cryptoWindow.encrypt=encrypt;
    function encrypt (_data,cb) {
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
-       data = asBuffer(_data);
-       subtle.encrypt(
-           ENCRYPT_Algo (),
-           keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'), 
+       var opts=getEncDecOpts(true,cb);
+       var data = asBuffer(_data);
+       opts.subtle.encrypt(
+           opts.algo,
+           opts.keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'), 
            data //ArrayBuffer of data you want to encrypt
        )
        .then(function(encrypted){
            //returns an ArrayBuffer containing the encrypted data
-           cb(undefined,Array.from(new Uint8Array(encrypted)),data,_data);
+           opts.cb(undefined,Array.from(new Uint8Array(encrypted)),data,_data);
        })
-       .catch(cb);
+       .catch(opts.cb);
    }
    encrypt.max = 128;
    
@@ -319,8 +306,8 @@ function moduleCode(window){
    cryptoWindow.encrypt_chain = encrypt_chain;
    
    function encrypt_chain(data,cb) {
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
-           key = keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'),
+       var opts=getEncDecOpts(true,cb);
+       var key = opts.keyStorage.getItem(cryptoWindow.keyname_public+'-crypto'),
            max=encrypt.max,twice=max*2,arr = [];
            
        while (data.length>twice) {
@@ -339,17 +326,17 @@ function moduleCode(window){
 
        var promises = arr.map(function(_data,ix){
            console.log("element",ix,"is",_data.length,"chars");
-           return subtle.encrypt(
+           return opts.subtle.encrypt(
                       ENCRYPT_Algo (),
                       key, 
                       _data //ArrayBuffer of data you want to encrypt
                   );
        });
        
-       return Promise.all(promises).then(resolve).catch(cb);
+       return Promise.all(promises).then(resolve).catch(opts.cb);
        
        function resolve (encrypted) {
-           return cb (undefined,encrypted.map(function(el){
+           return opts.cb (undefined,encrypted.map(function(el){
                return Array.from(new Uint8Array(el));
            }));
        } 
@@ -380,27 +367,27 @@ function moduleCode(window){
 
    cryptoWindow.decrypt=decrypt;
    function decrypt (_data,cb) {
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage,
-       data = asBuffer(_data);
-       subtle.decrypt(
-           ENCRYPT_Algo (),
-           keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
+       var opts=getEncDecOpts(true,cb);
+       var data = asBuffer(_data);
+       opts.subtle.decrypt(
+           opts.algo,
+           opts.keyStorage.getItem(cryptoWindow.keyname_private+'-crypto'), 
            data //ArrayBuffer of data you want to encrypt
        )
        .then(function(decrypted){
            //returns an ArrayBuffer containing the decrypted data
-           cb(undefined,new Uint8Array(decrypted),new TextDecoder("utf-8").decode(decrypted));
+           opts.cb(undefined,new Uint8Array(decrypted),new TextDecoder("utf-8").decode(decrypted));
        })
-       .catch(cb);
+       .catch(opts.cb);
    }
    
    cryptoWindow.decrypt_chain=decrypt_chain;
    function decrypt_chain(chain,cb) {
-       var win=cryptoWindow(),subtle=win.crypto.subtle,keyStorage=win.keyStorage;
-       var key=keyStorage.getItem(cryptoWindow.keyname_private+'-crypto');
+       var opts=getEncDecOpts(true,cb);
+       var key=opts.keyStorage.getItem(cryptoWindow.keyname_private+'-crypto');
        var promises = chain.map(function(_data){
            var data = asBuffer(_data) ;
-           return subtle.decrypt(
+           return opts.subtle.decrypt(
                       ENCRYPT_Algo (),
                       key, 
                       data
