@@ -61,9 +61,9 @@ function moduleCode(window){
    
    
    function loadKey(keyName,cb) {
-          var k = cryptoWindow().keyStorage.getItem(keyName);
+          var win=cryptoWindow(),k = win.keyStorage.getItem(keyName);
           if ( k ) {
-              cryptoWindow.subtle.exportKey(
+              win.subtle.exportKey(
                    "jwk", //can be "jwk" (public or private), "spki" (public only), or "pkcs8" (private only)
                    k //can be a publicKey or privateKey, as long as extractable was true
                )
