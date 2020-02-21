@@ -1,5 +1,5 @@
 
-var npms = { 'subtle' : 'subtle' };
+var npms = { };
 var options = {
     moduleCode   : moduleCode, 
     browserFiles : [ ], 
@@ -27,15 +27,14 @@ function moduleCode(window){
        }
        var 
        
-       /*WebCrypto = require("node-webcrypto-ossl"),
+       WebCrypto = require("node-webcrypto-ossl"),
        
        webcrypto = new WebCrypto(storage===false?undefined:{
          directory: storage||"key_storage"
-       }),*/
-      // webcrypto = require("crypto"),
-       //subtle = webcrypto.subtle,
-       keyStorage = fakeStorage() ,
-       node_window = { crypto : { subtle : npms.subtle }, keyStorage : keyStorage};
+       }),
+       subtle = webcrypto.subtle,
+       keyStorage = storage ? webcrypto.keyStorage : fakeStorage() ,
+       node_window = { crypto : { subtle : subtle }, keyStorage : keyStorage};
        
        cryptoWindow = function () {return node_window;};
        cryptoWindow.keyname_public  = !!storageKey ? storageKey+"-public"  : "uploads-public";
